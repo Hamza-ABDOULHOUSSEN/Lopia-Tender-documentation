@@ -1,0 +1,224 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+Abstract Produit {
+produitId : Integer
+intitulé : String
+marque : String
+reference : String
+unite : String
+quantite : Integer
+description : String
+pieceJointe : ArrayList<String>
+--
+//constructor
+//getters and setters
+__
+}
+
+class DescriptionProduit {
+--
+//constructor
+//getters and setters
+__
+}
+
+class ProduitReel {
+prix : Integer
+--
+//constructor
+//getters and setters
+__
+}
+
+class Utilisateur {
+utilisateurId : Integer
+mail : String
+identifiant : String
+mdp : String
+tel : String
+adresse : String
+imageProfil : String
+__
+//constructor
+//getters and setters
+__
+setModeWithValue(int $mode)
+}
+
+enum Mode {
+ACHETEUR
+FOURNISSEUR
+SOCIETE
+}
+
+class Acheteur {
+acheteurId : Integer
+__
+//constructor
+//getters and setters
+__
+getSaveDemande()
+}
+
+class Fournisseur {
+fournisseurId : Integer
+tags : ArrayList<Tag>
+nomSociete : String
+siteWeb : String
+__
+//constructor
+//getters and setters
+__
+getOffreFromDemande(Demande $demande)
+}
+
+class Societe {
+societeId : Integer
+__
+//constructor
+//getters and setters
+__
+}
+
+enum Tags {
+CARRELAGE ET PARQUET
+CUISINE
+DECORATION ET LUMINAIRE
+ELECTRICITE ET ENERGIE
+MATERIAUX ET MENUISERIE
+OUTILLAGE
+PEINTURE ET DROGUERIE
+PISCINE ET JARDIN
+SALLE DE BAINS
+PLOMBERIE ET CLIMATISATION
+QUINCAILLERIE ET SECURITE
+}
+
+class Demande {
+demandeId : Integer
+dateCreation : Date
+delai : Integer
+--
+//constructor
+//getters and setters
+__
+delete()
+getSaveOffre()
+getOffreFromFournisseur(Fournisseur $fournisseur)
+getAllProduitReelSortByDescriptionProduit()
+}
+
+enum EtatDemande {
+NON_ENREGISTREE
+EN_COURS
+REPONDUE
+VALIDEE
+VALIDEE_PART
+ANNULEE
+}
+
+class Offre {
+offreId : Integer
+dateCreation : Date
+dateDerniereModification : Date
+--
+//constructor
+//getters and setters
+__
+delete()
+}
+
+enum EtatOffre {
+NON_ENREGISTREE
+EN_ATTENTE
+SELECTIONNEE
+NON_SELECTIONNEE
+ANNULEE
+}
+
+class Message {
+messageId : Integer
+heure : Heure
+text : Text
+envoyeur : Utilisateur
+receveur : Utilisateur
+--
+//constructor
+//getters and setters
+__
+}
+
+class PreferenceNotification {
+prefNotifId : Integer
+notificationEmail : Bool
+notificationTel : Bool
+notificationOffre : Bool
+notificationDemande : Bool
+notificationMessage : Bool
+notificationBonDeCommande : Bool
+--
+//constructor
+//getters and setters
+__
+}
+
+class BonDeCommande {
+bonDeCommandeId : Integer
+dateCreation : Date
+--
+//constructor
+//getters and setters
+__
+getDemande()
+getAcheteur()
+getFournisseur()
+getOffre()
+}
+
+enum EtatBonDeCommande {
+EN_ATTENTE
+VALIDE
+REFUSE
+}
+
+'Utilisateur'
+Utilisateur "1" -- "1" Acheteur
+Utilisateur "1" -- "1" Fournisseur
+Utilisateur "1" -- "1" Societe
+Utilisateur --> PreferenceNotification
+Utilisateur --> Mode
+Fournisseur --> "*" Tags
+
+'Societe'
+Societe "1" -- "*" Acheteur
+Societe "1" -- "*" Fournisseur
+
+'Demande'
+Demande --> EtatDemande
+Demande "*" -- "1" Acheteur
+Demande "1" -- "*" DescriptionProduit
+Demande "1" -- "*" Offre
+
+'Offre'
+Offre "1" -- "*" ProduitReel
+Offre "*" -- "1" Fournisseur
+Offre --> EtatOffre
+
+ProduitReel "*" -- "1" DescriptionProduit
+
+
+'Produit'
+Produit *--> DescriptionProduit
+Produit *--> ProduitReel
+
+'Message'
+Message -- Utilisateur
+Message -- Utilisateur
+
+'BonDeCommande'
+BonDeCommande "1" -- "*" ProduitReel
+BonDeCommande --> EtatBonDeCommande
+
+
+@enduml

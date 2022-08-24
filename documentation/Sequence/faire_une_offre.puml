@@ -1,0 +1,217 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+' UTILISATEURS
+actor Fournisseur as fournisseur
+
+' PAGES
+collections interface as interface
+
+' CONTROLLER
+participant FournisseurController as FC
+
+' DATABASE
+database EntityManager as db
+
+
+' ENTITY
+entity demande as demande
+entity offre as offre
+
+== Consulter les demandes reçues ==
+
+
+'Consulter les demandes reçues
+fournisseur --> interface : "Faire une offre"
+note over interface #318f3d: navbar.html.twig
+
+interface -> FC : consulter_demandes_recues()
+activate FC
+
+FC -> db
+activate db
+note right of db
+on recupere les demandes validées
+end note
+return result
+
+FC --> FC
+note right of FC
+on tri les demandes en
+demandeListTraitee :
+les demandes avec une offre déjà faite
+demandeListNonTraitee :
+les nouvelles demandes non traités
+end note
+
+return render(demandeListNonTraitee, demandeListTraitee)
+
+note right of interface : on affiche les demandes reçues
+
+note over interface #318f3d: consulter_demandes_recues.html.twig
+
+== Faire une offre ==
+'Faire une offre
+
+fournisseur --> interface : "Faire une offre"
+note right of fournisseur
+le fournisseur choisit la demande puis
+appuie sur faire une offre a côté
+end note
+note over interface #318f3d: consulter_demandes_recues.html.twig
+
+interface -> FC : faire_une_offre(demande)
+activate FC
+note right of FC : OffreForm non complété
+
+FC -> db
+activate db
+
+note right of db
+pour cette demande
+on reprend l'offre non_enregistrée
+s'il y en a pas
+on crée une entité offre
+end note
+
+return Offre offre
+
+FC -> demande : getDescriptionProduit()
+activate demande
+return Collection descriptionProduits
+
+FC -> offre : getProduitReel()
+activate offre
+return Collection ProduitReels
+
+FC -> FC : OffreForm
+
+note right of FC : ce formulaire sert à valider l'offre
+
+return render(demande, offre, descriptionProduits, ProduitReels)
+note right of interface
+on affiche les produits demandés
+on affiche les produits présents dans l'offre
+end note
+
+note over interface #318f3d: faire_une_offre.html.twig
+
+
+== Ajouter des produits réels ==
+
+group plusieurs fois
+fournisseur --> interface : "Ajouter un produit"
+note over interface #318f3d: faire_une_offre.html.twig
+
+interface -> FC : ajout_produit_reel(demande, offre)
+activate FC
+
+note right of FC : ProduitReelForm non complété
+
+FC -> demande : getDescriptionProduit()
+activate demande
+return Collection descriptionProduits
+
+
+
+FC -> FC : ProduitReelForm
+
+return render(demande, offre, descriptionProduits)
+note right of interface
+dans le formulaire, on ajoute un champ
+qui permet de selectionner la description de produit
+qui correspond au produit réel que l'on va ajouter
+end note
+note over interface #318f3d: ajout_produit_reel.html.twig
+
+
+fournisseur --> interface : "Ajouter" (ProduitReelForm complété)
+note over interface #318f3d: ajout_produit_reel.html.twig
+
+interface -> FC : ajout_produit_reel(demande, offre)
+activate FC
+note right of FC : ProduitReelForm complété
+
+FC -> db
+activate db
+note right of db
+création de l'entité
+produitReel
+end note
+return ProduitReel produitReel
+
+FC -> offre : addProduitReel(produitReel)
+activate offre
+return void
+
+FC -> db : persist(offre)
+activate db
+note right of db
+mise à jour de l'entité
+offre
+end note
+return void
+
+note right of FC
+une fois le produit ajouté
+on retourne a la page faire une offre
+end note
+
+FC -> FC : redirectToRoute('app_faire_une_offre', [demande, offre])
+
+FC -> FC : faire_une_offre(demande, offre)
+
+note right of FC : OffreForm non complété
+
+note right of FC : l'offre est envoyée, pas besoin de la chercher
+
+FC -> demande : getDescriptionProduit()
+activate demande
+return Collection descriptionProduits
+
+FC -> offre : getProduitReel()
+activate offre
+return Collection ProduitReels
+
+return render(demande, offre, descriptionProduits, ProduitReels)
+
+note over interface #318f3d: faire_une_offre.html.twig
+
+end
+
+
+
+
+
+'###########
+
+
+== Valider l'offre ==
+
+fournisseur --> interface : "Valider" (OffreForm complété)
+note over interface #318f3d: faire_une_offre.html.twig
+
+interface -> FC : faire_une_offre(demande, offre)
+activate FC
+
+FC -> offre : setEtatOffre(EtatDemande::EN_ATTENTE)
+activate offre
+return void
+
+FC -> db : persist(offre)
+activate db
+note right of db
+mise à jour de l'entité
+offre
+end note
+return void
+
+FC -> FC : redirectToRoute('app_consulter_demandes_recues')
+
+FC -> FC : consulter_demandes_recues()
+
+return render()
+note over interface #318f3d: consulter_demandes_recues.html.twig
+
+@enduml
+

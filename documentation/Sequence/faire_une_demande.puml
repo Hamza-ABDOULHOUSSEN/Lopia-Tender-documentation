@@ -1,0 +1,148 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+' UTILISATEURS
+actor Acheteur as acheteur
+
+' PAGES
+collections interface as interface
+
+' CONTROLLER
+participant AcheteurController as AC
+
+' DATABASE
+database EntityManager as db
+
+' ENTITY
+entity demande as demande
+
+
+== Aller a la page faire une demande ==
+
+
+'Aller a la page faire_une_demande
+acheteur --> interface : "Faire une demande"
+note over interface #318f3d: navbar.html.twig
+
+interface -> AC : faire_une_demande()
+activate AC
+
+note right of AC : DemandeForm non complété
+
+AC -> db
+activate db
+
+note right of db
+on reprend la demande non_enregistrée
+s'il y en a pas
+on crée une entité demande
+end note
+
+return Demande demande
+
+AC -> demande : getDescriptionProduit()
+activate demande
+return Collection descriptionProduits
+
+AC -> AC : DemandeForm
+
+note right of AC : ce formulaire sert à valider la demande
+
+return render(demande, descriptionProduits)
+note right of interface : on affiche les produits présents dans la demande
+
+note over interface #318f3d: faire_une_demande.html.twig
+
+== Ajouter des descriptions de produit ==
+
+group plusieurs fois
+acheteur --> interface : "Ajouter un produit"
+note over interface #318f3d: faire_une_demande.html.twig
+
+interface -> AC : ajout_description_produit(demande)
+activate AC
+
+note right of AC : DescriptionProduitForm non complété
+AC -> AC : DescriptionProduitForm
+
+return render(demande)
+note over interface #318f3d: ajout_description_produit.html.twig
+
+acheteur --> interface : "Ajouter" (DescriptionForm complété)
+note over interface #318f3d: ajout_description_produit.html.twig
+
+interface -> AC : ajout_description_produit(demande)
+activate AC
+note right of AC : DescriptionProduitForm complété
+
+AC -> db
+activate db
+note right of db
+création de l'entité
+descriptionProduit
+end note
+return DescriptionProduit descriptionProduit
+
+AC -> demande : addDescriptionProduit(descriptionProduit)
+activate demande
+return void
+
+AC -> db : persist(demande)
+activate db
+note right of db
+mise à jour de l'entité
+demande
+end note
+return void
+
+note right of AC
+une fois le produit ajouté
+on retourne a la page faire une demande
+end note
+
+AC -> AC : redirectToRoute('app_faire_une_demande', [demande])
+
+AC -> AC : faire_une_demande(demande)
+
+note right of AC : DemandeForm non complété
+
+note right of AC : la demande est envoyée, pas besoin de la chercher
+
+AC -> demande : getDescriptionProduit()
+activate demande
+return Collection descriptionProduits
+
+
+return render(demande, descriptionProduits)
+note right of interface : on affiche les produits présents dans la demande
+
+note over interface #318f3d: faire_une_demande.html.twig
+
+end
+
+== Valider la demande ==
+
+acheteur --> interface : "Valider" (DemandeForm complété)
+note over interface #318f3d: faire_une_demande.html.twig
+
+interface -> AC : faire_une_demande(demande)
+activate AC
+
+AC -> demande : setEtatDemande(EtatDemande::EN_COURS)
+activate demande
+return void
+
+AC -> db : persist(demande)
+activate db
+note right of db : mise à jour de l'entité demande
+return void
+
+AC -> AC : redirectToRoute('app_consulter_demande')
+
+AC -> AC : consulter_demande()
+
+return render()
+note over interface #318f3d: consulter_demande.html.twig
+
+@enduml
+

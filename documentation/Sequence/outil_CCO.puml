@@ -1,0 +1,154 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+' UTILISATEURS
+actor Acheteur as acheteur
+
+' PAGES
+collections interface as interface
+
+' CONTROLLER
+participant AcheteurController as AC
+
+' DATABASE
+database EntityManager as db
+
+
+' ENTITY
+entity demande as demande
+entity offre as offre
+entity produitReel as pr
+entity descriptionProduit as pd
+
+== Consulter les demandes ==
+
+
+'Consulter les demandes
+acheteur --> interface : "Consulter les demandes"
+note over interface #318f3d: navbar.html.twig
+
+interface -> AC : consulter_demande()
+activate AC
+
+AC -> db
+activate db
+note right of db
+on recupere les demandes validées de l'acheteur
+end note
+return result
+
+return render(demandeList)
+
+note right of interface : on affiche les demandes de l'acheteur
+
+note over interface #318f3d: consulter_demande.html.twig
+
+== Aller vers l'outil CCO ==
+'Appliquer l'outil CCO
+
+acheteur --> interface : "Outil CCO"
+note right of acheteur
+l'acheteur choisit la demande puis
+appuie sur calcul CCO
+end note
+note over interface #318f3d: consulter_demande.html.twig
+
+interface -> AC : outil_cco(demande)
+activate AC
+
+AC -> demande
+activate demande
+
+group pour toute les offres de la demande
+demande -> offre : getProduitReel()
+activate offre
+return Collection produitReels
+
+end
+
+return Collection allProduitReels
+
+AC -> AC
+note right of AC
+on tri les produits
+en mettant ensemble ceux qui
+correspondent à la même description de produit
+end note
+
+return render(demande, allProduit, allProduitIntitule)
+
+note right of interface
+on affiche tous les produits proposés
+end note
+
+note over interface #318f3d: outil_CCO/liste_produits.html.twig
+
+== Lancer l'outil CCO ==
+
+note right of acheteur
+on sélectionne tous les produits réels
+qui nous intéresse puis on lance
+l'outil CCO
+end note
+
+acheteur -> interface : "Lancer l'outil CCO"
+
+interface -> AC : recapitulatif(demande, produitReels)
+
+activate AC
+
+note right of AC
+on récupère les
+produits sélectionnés
+end note
+
+note right of AC
+on crée allSelectedProduit
+qui contient pour chaque DescriptionProduit
+le ProduitReel le moins cher parmi
+ceux sélectionnés
+end note
+
+group pour tous les produits sélectionnés
+
+AC -> pr
+activate pr
+pr -> pd : getDescriptionProduit()
+activate pd
+return DescriptionProduit descriptionProduit
+
+return ProduitReel produitReel
+group si
+note right of AC
+dans allSelectedProduit pour descriptionProduit, si
+il n'y a pas de ProduitReel ou
+le ProduitReel présent est plus chère que produitReel
+alors
+end note
+
+AC -> AC
+
+note right of AC
+on ajoute produitReel dans allSelectedProduit pour descriptionProduit
+end note
+
+end
+end
+
+AC -> AC
+note right of AC
+on tri allSelectedProduit par Fournisseur
+end note
+
+return render(demande, allSelectedProduitByFournisseur)
+
+note right of interface
+on affiche le recapitulatif de l'outil
+pour chaque fournisseur sélectionné
+on affiche la commande a effectuer
+end note
+
+note over interface #318f3d: outil_CCO/recapitulatif.html.twig
+
+@enduml
+
